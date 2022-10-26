@@ -5,25 +5,39 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Web.Http.ExceptionHandling;
 using System.Web.Http.Routing;
+using NuGet.Server.Core.Infrastructure;
 using NuGet.Server.DataServices;
 using NuGet.Server.Infrastructure;
 using NuGet.Server.V2;
+using SimpleInjector;
+using SimpleInjector.Integration.WebApi;
 
 // The consuming project executes this logic with its own copy of this class. This is done with a .pp file that is
 // added and transformed upon package install.
 #if DEBUG
-[assembly: WebActivatorEx.PreApplicationStartMethod(typeof(NuGet.Server.App_Start.NuGetODataConfig), "Start")]
+[assembly: WebActivatorEx.PreApplicationStartMethod(typeof(NuGet.Server.App_Start.NuGetODataConfig), "OnStarting")]
+[assembly: WebActivatorEx.PostApplicationStartMethod(typeof(NuGet.Server.App_Start.NuGetODataConfig), "OnStarted")]
 #endif
 
 namespace NuGet.Server.App_Start
 {
     public static class NuGetODataConfig
     {
-        public static void Start()
+        public static void OnStarting()
         {
             ServiceResolver.SetServiceResolver(new DefaultServiceResolver());
-
             Initialize(GlobalConfiguration.Configuration, "PackagesOData");
+        }
+
+        public static void OnStarted()
+        {
+            var config = GlobalConfiguration.Configuration;
+            var container = new Container();
+            container.RegisterInstance(typeof(ISettingsProvider), ServiceResolver.Current.Resolve<ISettingsProvider>());
+            container.RegisterWebApiControllers(config);
+            container.Verify();
+
+            config.DependencyResolver = new SimpleInjectorWebApiDependencyResolver(container);
         }
 
         public static void Initialize(HttpConfiguration config, string controllerName)

@@ -56,7 +56,7 @@ namespace NuGet.Server.Tests
                 // 2. Write a package to the drop folder.
                 var packagePath = Path.Combine(tc.PackagesDirectory, "package.nupkg");
                 TestData.CopyResourceToPath(TestData.PackageResource, packagePath);
-                
+
                 // 3. Get the list of packages again. This should have the added package.
                 using (var request = new HttpRequestMessage(HttpMethod.Get, "/nuget/Packages()"))
                 using (var response = await tc.Client.SendAsync(request))
@@ -83,8 +83,8 @@ namespace NuGet.Server.Tests
 
                 // 2. Download the package.
                 using (var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"/nuget/Packages(Id='{TestData.PackageId}',Version='{TestData.PackageVersionString}')/Download"))
+                           HttpMethod.Get,
+                           $"/nuget/Packages(Id='{TestData.PackageId}',Version='{TestData.PackageVersionString}')/Download"))
                 using (var response = await tc.Client.SendAsync(request))
                 {
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -111,8 +111,8 @@ namespace NuGet.Server.Tests
 
                 // 2. Search for all packages supporting .NET Framework 4.6 (this should match the test package)
                 using (var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"/nuget/Search?targetFramework='net46'"))
+                           HttpMethod.Get,
+                           $"/nuget/Search?targetFramework='net46'"))
                 using (var response = await tc.Client.SendAsync(request))
                 {
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -123,8 +123,8 @@ namespace NuGet.Server.Tests
 
                 // 3. Search for all packages supporting .NET Framework 2.0 (this should match nothing)
                 using (var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"/nuget/Search?targetFramework='net20'"))
+                           HttpMethod.Get,
+                           $"/nuget/Search?targetFramework='net20'"))
                 using (var response = await tc.Client.SendAsync(request))
                 {
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -364,8 +364,8 @@ namespace NuGet.Server.Tests
 
                 // 2. Search for packages.
                 using (var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"/nuget/Search?targetFramework='net46'"))
+                           HttpMethod.Get,
+                           $"/nuget/Search?targetFramework='net46'"))
                 using (var response = await tc.Client.SendAsync(request))
                 {
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -375,13 +375,13 @@ namespace NuGet.Server.Tests
                 var pushPath = Path.Combine(tc.TemporaryDirectory, "package.nupkg");
                 TestData.CopyResourceToPath(TestData.PackageResource, pushPath);
                 using (var request = new HttpRequestMessage(HttpMethod.Put, "/nuget")
-                {
-                    Headers =
-                    {
-                        { "X-NUGET-APIKEY", apiKey }
-                    },
-                    Content = tc.GetFileUploadContent(pushPath),
-                })
+                       {
+                           Headers =
+                           {
+                               { "X-NUGET-APIKEY", apiKey }
+                           },
+                           Content = tc.GetFileUploadContent(pushPath),
+                       })
                 {
                     using (request)
                     using (var response = await tc.Client.SendAsync(request))
@@ -392,8 +392,8 @@ namespace NuGet.Server.Tests
 
                 // 4. Search for packages again.
                 using (var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"/nuget/Search?targetFramework='net46'"))
+                           HttpMethod.Get,
+                           $"/nuget/Search?targetFramework='net46'"))
                 using (var response = await tc.Client.SendAsync(request))
                 {
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -486,13 +486,13 @@ namespace NuGet.Server.Tests
             public async Task PushPackageAsync(string apiKey, string packagePath, string pushUrl = "/nuget", HttpStatusCode excepectedStatusCode = HttpStatusCode.Created)
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Put, pushUrl)
-                {
-                    Headers =
-                    {
-                        { "X-NUGET-APIKEY", apiKey }
-                    },
-                    Content = GetFileUploadContent(packagePath)
-                })
+                       {
+                           Headers =
+                           {
+                               { "X-NUGET-APIKEY", apiKey }
+                           },
+                           Content = GetFileUploadContent(packagePath)
+                       })
                 using (var response = await Client.SendAsync(request))
                 {
                     Assert.Equal(excepectedStatusCode, response.StatusCode);
@@ -522,7 +522,7 @@ namespace NuGet.Server.Tests
 
             public IDependencyScope BeginScope()
             {
-                // This is sufficient for integration testing, but it not the "right" way to do it.
+                // This is sufficient for integration testing, but it is not the "right" way to do it.
                 return this;
             }
 
@@ -537,16 +537,17 @@ namespace NuGet.Server.Tests
 
             public object GetService(Type serviceType)
             {
-                object instance = null;
+                object instance;
                 if (serviceType == typeof(TestablePackagesODataController))
                 {
                     instance = new TestablePackagesODataController(_resolver);
-                }
-
-                var disposable = instance as IDisposable;
-                if (instance != null)
-                {
+                    
+                    var disposable = (IDisposable)instance;
                     _disposables.Add(disposable);
+                }
+                else
+                {
+                    instance = _resolver.Resolve(serviceType);
                 }
 
                 return instance;
@@ -559,7 +560,7 @@ namespace NuGet.Server.Tests
                 if (service != null)
                 {
                     yield return service;
-                }                
+                }
             }
         }
     }

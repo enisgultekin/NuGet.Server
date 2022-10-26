@@ -6,19 +6,20 @@ using NuGet.Server;
 using NuGet.Server.Infrastructure;
 using NuGet.Server.V2;
 
-[assembly: WebActivatorEx.PreApplicationStartMethod(typeof($rootnamespace$.App_Start.NuGetODataConfig), "Start")]
+[assembly: WebActivatorEx.PreApplicationStartMethod(typeof($rootnamespace$.App_Start.NuGetODataConfig), "OnStarting")]
+[assembly: WebActivatorEx.PostApplicationStartMethod(typeof($rootnamespace$.App_Start.NuGetODataConfig), "OnStarted")]
 
 namespace $rootnamespace$.App_Start 
 {
     public static class NuGetODataConfig 
     {
-        public static void Start() 
+        public static void OnStarting() 
         {
             ServiceResolver.SetServiceResolver(new DefaultServiceResolver());
 
             var config = GlobalConfiguration.Configuration;
 
-            NuGetV2WebApiEnabler.UseNuGetV2WebApiFeed(
+                       NuGetV2WebApiEnabler.UseNuGetV2WebApiFeed(
                 config,
                 "NuGetDefault",
                 "nuget",
@@ -38,5 +39,17 @@ namespace $rootnamespace$.App_Start
             );
 
         }
+        
+        public static void OnStarted()
+                {
+                    var config = GlobalConfiguration.Configuration;
+                    var container = new Container();
+                    container.RegisterInstance(typeof(ISettingsProvider), ServiceResolver.Current.Resolve<ISettingsProvider>());
+                    container.RegisterWebApiControllers(config);
+                    container.Verify();
+        
+                    config.DependencyResolver = new SimpleInjectorWebApiDependencyResolver(container);
+                }
+
     }
 }

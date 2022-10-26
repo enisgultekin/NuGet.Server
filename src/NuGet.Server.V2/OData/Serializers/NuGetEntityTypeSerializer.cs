@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.Http.OData;
 using System.Web.Http.OData.Extensions;
 using System.Web.Http.OData.Formatter.Serialization;
@@ -17,9 +18,12 @@ namespace NuGet.Server.V2.OData.Serializers
     public class NuGetEntityTypeSerializer
         : ODataEntityTypeSerializer
     {
-        public NuGetEntityTypeSerializer(ODataSerializerProvider serializerProvider)
+        private readonly string _defaultUriScheme;
+
+        public NuGetEntityTypeSerializer(ODataSerializerProvider serializerProvider,string defaultUriScheme)
             : base(serializerProvider)
         {
+            _defaultUriScheme = defaultUriScheme;
             ContentType = "application/zip";
         }
 
@@ -98,14 +102,24 @@ namespace NuGet.Server.V2.OData.Serializers
         private string BuildId(ODataPackage package, EntityInstanceContext context)
         {
             var segments = GetPackagePathSegments(package);
-            return context.Url.CreateODataLink(segments);
+            string url = context.Url.CreateODataLink(segments); 
+            if (_defaultUriScheme != string.Empty)
+            {
+                url = Regex.Replace(url, @"http[s]?", _defaultUriScheme);
+            }
+
+            return url;
         }
 
-        private  Uri BuildLinkForStreamProperty(ODataPackage package, EntityInstanceContext context)
+        private Uri BuildLinkForStreamProperty(ODataPackage package, EntityInstanceContext context)
         {
             var segments = GetPackagePathSegments(package);
             segments.Add(new ActionPathSegment("Download"));
             var downloadUrl = context.Url.CreateODataLink(segments);
+            if (_defaultUriScheme != string.Empty)
+            {
+                downloadUrl = Regex.Replace(downloadUrl, @"http[s]?", _defaultUriScheme);
+            }
             return new Uri(downloadUrl);
         }
 
